@@ -8,14 +8,25 @@ export function ScrollMediaExpansionHero() {
   const [progress, setProgress] = useState(0);
 
   useEffect(() => {
+    const motionPreference = window.matchMedia("(prefers-reduced-motion: reduce)");
     const update = () => {
       if (!ref.current) return;
+      if (motionPreference.matches) {
+        setProgress(1);
+        return;
+      }
       const rect = ref.current.getBoundingClientRect();
       setProgress(Math.max(0, Math.min(1, (window.innerHeight - rect.top) / (window.innerHeight + rect.height * .45))));
     };
     update();
     window.addEventListener("scroll", update, { passive: true });
-    return () => window.removeEventListener("scroll", update);
+    window.addEventListener("resize", update);
+    motionPreference.addEventListener("change", update);
+    return () => {
+      window.removeEventListener("scroll", update);
+      window.removeEventListener("resize", update);
+      motionPreference.removeEventListener("change", update);
+    };
   }, []);
 
   const inset = 7 * (1 - progress);
